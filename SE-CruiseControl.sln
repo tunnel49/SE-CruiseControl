@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32228.343
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SE-CruiseControl", "SE-CruiseControl.csproj", "{13A5EAFB-FAD7-4F68-960F-AED8E09E26B3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{13A5EAFB-FAD7-4F68-960F-AED8E09E26B3}.Debug|x64.ActiveCfg = Debug|x64
+		{13A5EAFB-FAD7-4F68-960F-AED8E09E26B3}.Debug|x64.Build.0 = Debug|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C7B0C248-3086-4EDE-A8C4-8A8D544C3A91}
+	EndGlobalSection
+EndGlobal

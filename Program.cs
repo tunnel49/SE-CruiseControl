@@ -20,64 +20,128 @@ using VRageMath;
 
 namespace IngameScript
 {
-	partial class Program : MyGridProgram
-	{
-		// This file contains your actual script.
-		//
-		// You can either keep all your code here, or you can create separate
-		// code files to make your program easier to navigate while coding.
-		//
-		// In order to add a new utility class, right-click on your project, 
-		// select 'New' then 'Add Item...'. Now find the 'Space Engineers'
-		// category under 'Visual C# Items' on the left hand side, and select
-		// 'Utility Class' in the main area. Name it in the box below, and
-		// press OK. This utility class will be merged in with your code when
-		// deploying your final script.
-		//
-		// You can also simply create a new utility class manually, you don't
-		// have to use the template if you don't want to. Just do so the first
-		// time to see what a utility class looks like.
-		// 
-		// Go to:
-		// https://github.com/malware-dev/MDK-SE/wiki/Quick-Introduction-to-Space-Engineers-Ingame-Scripts
-		//
-		// to learn more about ingame scripts.
+    partial class Program : MyGridProgram
+    {
+        private readonly List<ConfigOption> defaultConfig = new List<ConfigOption>()
+        {
+            new ConfigOption("cockpitTag", "[FA]", "Tag to select the main cockpit", true),
+            new ConfigOption("kP", "5", "Proportional Gain of PID Controller", true),
+            new ConfigOption("kI", ".1", "Integral Gain of PID Controller", true),
+            new ConfigOption("kD", "1", "Derivative Gain of PID Controller", true),
+            new ConfigOption("decay", "0.25", "Integral Decay", true),
+            new ConfigOption("step","0.1","Time Step between control inputs", true)
+        };
+        private CustomDataConfig configReader;
 
-		public Program()
-		{
-			// The constructor, called only once every session and
-			// always before any other method is called. Use it to
-			// initialize your script. 
-			//     
-			// The constructor is optional and can be removed if not
-			// needed.
-			// 
-			// It's recommended to set Runtime.UpdateFrequency 
-			// here, which will allow your script to run itself without a 
-			// timer block.
-		}
+        Base6Directions.Direction forward = Base6Directions.Direction.Forward;
 
-		public void Save()
-		{
-			// Called when the program needs to save its state. Use
-			// this method to save your state to the Storage field
-			// or some other means. 
-			// 
-			// This method is optional and can be removed if not
-			// needed.
-		}
+        PidController myPid;
+        IMyCockpit myCockpit;
 
-		public void Main(string argument, UpdateType updateSource)
-		{
-			// The main entry point of the script, invoked every time
-			// one of the programmable block's Run actions are invoked,
-			// or the script updates itself. The updateSource argument
-			// describes where the update came from. Be aware that the
-			// updateSource is a  bitfield  and might contain more than 
-			// one update type.
-			// 
-			// The method itself is required, but the arguments above
-			// can be removed if not needed.
-		}
-	}
+        bool enabled = false;
+        float setpoint = 20;
+        float maxTarget = 90;
+        public Program()
+        {
+            configReader = new CustomDataConfig(Me, defaultConfig);
+            Initialize();
+        }
+        private void Initialize()
+        {
+            String tag = configReader.Get<string>("cockpitTag");
+            float __kP = configReader.Get<float>("kP");
+            float __kI = configReader.Get<float>("kI");
+            float __kD = configReader.Get<float>("kD");
+            float __decay = configReader.Get<float>("decay");
+            float __step = configReader.Get<float>("step");
+
+            var blocks = new List<IMyCockpit>();
+            GridTerminalSystem.GetBlocksOfType<IMyCockpit>(
+                blocks,
+                x => x.CubeGrid == Me.CubeGrid &&
+                        x.CustomName.Contains(tag)
+            );
+            try{
+                myCockpit = blocks[0];
+            }
+            catch (Exception){
+                Echo("Could not find matching cockpit block");
+                return;
+            }
+            blocks.Clear();
+
+            myPid = new PidController(__kP, __kI, __kD, __decay, __step);
+            Runtime.UpdateFrequency = UpdateFrequency.Update10;
+        }
+
+        public void Save()
+        {
+            // Called when the program needs to save its state. Use
+            // this method to save your state to the Storage field
+            // or some other means. 
+            // 
+            // This method is optional and can be removed if not
+            // needed.
+        }
+        public void Main(string argument, UpdateType updateSource)
+        {
+            if ((updateSource & UpdateType.Update10) == 0)
+            {
+                Read(argument);
+                return;
+            }
+
+            float process = getShipSpeed(myCockpit, forward);
+            float error = setpoint - process;
+            float correction = myPid.Control(error);
+            Echo("Setpoint (SP):");
+            Echo(setpoint.ToString());
+            Echo("Process (PV):");
+            Echo(process.ToString());
+            Echo("Error (E):");
+            Echo(error.ToString());
+            Echo("Correction:");
+            Echo(correction.ToString());
+        }
+
+        public void Read(string argument)
+        {
+            float value = 0;
+            string[] args = argument.Split(' ');
+            if (args.Length < 1)
+                return;
+            try
+            {
+                value = Convert.ToSingle(args[1]);
+            }
+            catch { }
+            switch (args[0].ToLower())
+            {
+                case "disable":
+                    enabled = false; break;
+                case "enable":
+                    enabled = true; break;
+                case "toggle":
+                    enabled = !enabled; break;
+                case "init":
+                    Initialize(); break;
+                case "set":
+                    setpoint = value; break;
+                case "inc":
+                    setpoint += value; break;
+                case "dec":
+                    setpoint -= value; break;
+            }
+            setpoint = Math.Min(setpoint, maxTarget);
+            setpoint = Math.Max(setpoint, 0);
+        }
+
+        public float getShipSpeed(IMyCockpit cockpit, Base6Directions.Direction direction)
+        {
+            var forward3I = cockpit.Position + Base6Directions.GetIntVector(cockpit.Orientation.TransformDirection(direction));
+            var forward = Vector3D.Normalize(Vector3D.Subtract(cockpit.CubeGrid.GridIntegerToWorld(forward3I), cockpit.GetPosition()));
+
+            return Convert.ToSingle(Vector3D.Dot(cockpit.GetShipVelocities().LinearVelocity, forward));
+        }
+    }
 }

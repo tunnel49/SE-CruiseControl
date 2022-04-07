@@ -47,15 +47,17 @@ namespace IngameScript
         }
         public void Main(string argument, UpdateType updateSource)
         {
-            if ((updateSource & UpdateType.Update10) == 0)
-            {
-                Read(argument);
-                return;
+            switch (updateSource){
+                case (UpdateType.Update10):
+                    thrustController.Tick10();
+                    break;
+                default:
+                    Command(argument);
+                    return;
             }
-            thrustController.Tick10(Echo);
         }
 
-        public void Read(string argument)
+        public void Command(string argument)
         {
             float value = 0;
             string[] args = argument.Split(' ');

@@ -85,7 +85,10 @@ namespace IngameScript
                 myPid = new PidController(__kP, __kI, __kD, __decay, __step);
             }
 
-
+            public void Tick10()
+            {
+                Tick10(program.Echo);
+            }
 
             public void Tick10(Action<string> echo)
             {

@@ -23,49 +23,18 @@ namespace IngameScript
     partial class Program : MyGridProgram
     {
         private readonly MyIni _ini = new MyIni();
+        private readonly ThrustController thrustController;
 
-        Base6Directions.Direction forward = Base6Directions.Direction.Forward;
 
-        PidController myPid;
-        IMyCockpit myCockpit;
-
-        bool enabled = false;
-        float setpoint = 20;
-        float maxTarget = 90;
         public Program()
         {
             MyIniParseResult result;
             if (!_ini.TryParse(Me.CustomData, out result))
                 throw new Exception(result.ToString());
-            Initialize();
-        }
-        private void Initialize()
-        {
-            String tag = _ini.Get("CruiseControl","cockpitTag").ToString();
-            float __kP = _ini.Get("CruiseControl", "kP").ToSingle();
-            float __kI = _ini.Get("CruiseControl", "kI").ToSingle();
-            float __kD = _ini.Get("CruiseControl", "kD").ToSingle();
-            float __decay = _ini.Get("CruiseControl", "decay").ToSingle();
-            float __step = _ini.Get("CruiseControl", "step").ToSingle();
-
-            var blocks = new List<IMyCockpit>();
-            GridTerminalSystem.GetBlocksOfType<IMyCockpit>(
-                blocks,
-                x => x.CubeGrid == Me.CubeGrid &&
-                        x.CustomName.Contains(tag)
-            );
-            try{
-                myCockpit = blocks[0];
-            }
-            catch (Exception){
-                Echo("Could not find matching cockpit block");
-                return;
-            }
-            blocks.Clear();
-
-            myPid = new PidController(__kP, __kI, __kD, __decay, __step);
+            thrustController = new ThrustController(this, _ini);
             Runtime.UpdateFrequency = UpdateFrequency.Update10;
         }
+
 
         public void Save()
         {
@@ -83,18 +52,7 @@ namespace IngameScript
                 Read(argument);
                 return;
             }
-
-            float process = getShipSpeed(myCockpit, forward);
-            float error = setpoint - process;
-            float correction = myPid.Control(error);
-            Echo("Setpoint (SP):");
-            Echo(setpoint.ToString());
-            Echo("Process (PV):");
-            Echo(process.ToString());
-            Echo("Error (E):");
-            Echo(error.ToString());
-            Echo("Correction:");
-            Echo(correction.ToString());
+            thrustController.Tick10(Echo);
         }
 
         public void Read(string argument)
@@ -111,22 +69,18 @@ namespace IngameScript
             switch (args[0].ToLower())
             {
                 case "disable":
-                    enabled = false; break;
+                    thrustController.Enabled = false; break;
                 case "enable":
-                    enabled = true; break;
+                    thrustController.Enabled = true; break;
                 case "toggle":
-                    enabled = !enabled; break;
-                case "init":
-                    Initialize(); break;
+                    thrustController.Enabled = !thrustController.Enabled; break;
                 case "set":
-                    setpoint = value; break;
+                    thrustController.Setpoint = value; break;
                 case "inc":
-                    setpoint += value; break;
+                    thrustController.Setpoint += value; break;
                 case "dec":
-                    setpoint -= value; break;
+                    thrustController.Setpoint -= value; break;
             }
-            setpoint = Math.Min(setpoint, maxTarget);
-            setpoint = Math.Max(setpoint, 0);
         }
 
         public float getShipSpeed(IMyCockpit cockpit, Base6Directions.Direction direction)

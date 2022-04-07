@@ -24,15 +24,9 @@ namespace IngameScript
     {
         public class PidController
         {
-            float _kP = 0;
-            float _kI = 0;
-            float _kD = 0;
-            float _integralDecayRatio = 0;
-            float _timeStep = 0;
-            float _inverseTimeStep = 0;
-            float _errorSum = 0;
-            float _lastError = 0;
-            bool _firstRun = true;
+            private readonly float _kP, _kI, _kD, _integralDecayRatio;
+            private float _timeStep, _inverseTimeStep, _errorSum = 0, _lastError = 0;
+            private bool _firstRun = true;
             public float Value { get; private set; }
 
             public PidController(float kP, float kI, float kD, float integralDecayRatio, float timeStep)

@@ -3,7 +3,7 @@
 
 Required parameters:
 [CruiseControl]
-cockpitTag = String
+cockpit_tag = String
 kP = Single
 kI = Single
 kD = Single

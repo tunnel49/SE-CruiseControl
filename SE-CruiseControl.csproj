@@ -39,9 +39,6 @@
   <Import Project="MDK/MDK.paths.props" Condition="exists('MDK/MDK.paths.props')" />
   <ItemGroup>
     <Compile Include="Program.PidController.cs" />
-    <Compile Include="Program.CustomDataConfig.cs" />
-    <Compile Include="Program.ConfigParserException.cs" />
-    <Compile Include="Program.ConfigOption.cs" />
     <Compile Include="MDK\Bootstrapper.cs" />
     <AdditionalFiles Include="MDK\MDK.options.props">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

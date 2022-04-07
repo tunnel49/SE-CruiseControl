@@ -22,16 +22,7 @@ namespace IngameScript
 {
     partial class Program : MyGridProgram
     {
-        private readonly List<ConfigOption> defaultConfig = new List<ConfigOption>()
-        {
-            new ConfigOption("cockpitTag", "[FA]", "Tag to select the main cockpit", true),
-            new ConfigOption("kP", "5", "Proportional Gain of PID Controller", true),
-            new ConfigOption("kI", ".1", "Integral Gain of PID Controller", true),
-            new ConfigOption("kD", "1", "Derivative Gain of PID Controller", true),
-            new ConfigOption("decay", "0.25", "Integral Decay", true),
-            new ConfigOption("step","0.1","Time Step between control inputs", true)
-        };
-        private CustomDataConfig configReader;
+        private readonly MyIni _ini = new MyIni();
 
         Base6Directions.Direction forward = Base6Directions.Direction.Forward;
 
@@ -43,17 +34,19 @@ namespace IngameScript
         float maxTarget = 90;
         public Program()
         {
-            configReader = new CustomDataConfig(Me, defaultConfig);
+            MyIniParseResult result;
+            if (!_ini.TryParse(Me.CustomData, out result))
+                throw new Exception(result.ToString());
             Initialize();
         }
         private void Initialize()
         {
-            String tag = configReader.Get<string>("cockpitTag");
-            float __kP = configReader.Get<float>("kP");
-            float __kI = configReader.Get<float>("kI");
-            float __kD = configReader.Get<float>("kD");
-            float __decay = configReader.Get<float>("decay");
-            float __step = configReader.Get<float>("step");
+            String tag = _ini.Get("CruiseControl","cockpitTag").ToString();
+            float __kP = _ini.Get("CruiseControl", "kP").ToSingle();
+            float __kI = _ini.Get("CruiseControl", "kI").ToSingle();
+            float __kD = _ini.Get("CruiseControl", "kD").ToSingle();
+            float __decay = _ini.Get("CruiseControl", "decay").ToSingle();
+            float __step = _ini.Get("CruiseControl", "step").ToSingle();
 
             var blocks = new List<IMyCockpit>();
             GridTerminalSystem.GetBlocksOfType<IMyCockpit>(
